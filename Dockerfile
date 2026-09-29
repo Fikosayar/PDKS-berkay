@@ -31,7 +31,8 @@ COPY --from=builder /app/start.mjs  ./start.mjs
 
 # dist/public: frontend statik dosyalar (zaten dist içinde — build.ts kopyalıyor)
 # Yükleme klasörü — volume ile kalıcı hale getirilebilir
-RUN mkdir -p uploads && chown -R pdks:pdks uploads dist
+# Yükleme ve log klasörleri — pdks kullanıcısı yazabilmeli
+RUN mkdir -p uploads logs && chown -R pdks:pdks uploads logs dist
 
 USER pdks
 

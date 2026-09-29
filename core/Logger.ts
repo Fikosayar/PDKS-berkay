@@ -1,8 +1,13 @@
 import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { mkdirSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-mkdirSync('logs', { recursive: true });
+// Mutlak yol: dist/core/Logger.js → /app/dist/core → /app/logs
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const LOG_DIR = join(__dirname, '..', '..', 'logs');
+mkdirSync(LOG_DIR, { recursive: true });
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -22,12 +27,12 @@ export const logger = winston.createLogger({
         : winston.format.json(),
     }),
     new DailyRotateFile({
-      filename: 'logs/app-%DATE%.log',
+      filename: join(LOG_DIR, 'app-%DATE%.log'),
       datePattern: 'YYYY-MM-DD',
       maxFiles: '30d',
     }),
     new DailyRotateFile({
-      filename: 'logs/error-%DATE%.log',
+      filename: join(LOG_DIR, 'error-%DATE%.log'),
       datePattern: 'YYYY-MM-DD',
       level: 'error',
       maxFiles: '90d',

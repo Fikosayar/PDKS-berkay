@@ -69,6 +69,13 @@ function copyStaticAssets() {
   } else {
     mkdirSync('dist/uploads', { recursive: true });
   }
+
+  // SQL migration dosyalarını dist/db/migrations/ klasörüne kopyala
+  // tsc sadece .ts dosyalarını derler, .sql dosyalarını kopyalamaz
+  mkdirSync('dist/db/migrations', { recursive: true });
+  cpSync('db/migrations', 'dist/db/migrations', { recursive: true });
+  console.log('SQL migration dosyaları dist/db/migrations/ içine kopyalandı.');
+
   console.log('Statik dosyalar dist/ içine kopyalandı (public, uploads)');
 }
 

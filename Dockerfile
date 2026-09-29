@@ -39,7 +39,7 @@ USER pdks
 EXPOSE 3005
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
-  CMD wget -qO- http://localhost:3005/api/v1/health || exit 1
+  CMD wget -qO- http://localhost:3005/health || exit 1
 
 # start.mjs: önce migration çalıştırır, sonra sunucuyu başlatır
 CMD ["node", "start.mjs"]

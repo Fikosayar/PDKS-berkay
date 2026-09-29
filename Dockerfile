@@ -2,30 +2,36 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Bağımlılıkları kopyala ve yükle
+# ÖNEMLİ: Build aşamasında development olmalı!
+# tsc ve tsx devDependencies'ten gelir, production'da yüklenmez.
+ENV NODE_ENV=development
+
 COPY package*.json ./
 RUN npm ci
 
-# Kaynak kodları kopyala
 COPY . .
 
-# Backend TypeScript + Frontend (app + admin) build
+# TypeScript (backend) + esbuild (frontend app + admin) derleme
 RUN npm run build
 
-# ── Aşama 2: Production ────────────────────────────────────────
+# ── Aşama 2: Production Image ──────────────────────────────────
 FROM node:20-alpine AS runner
 WORKDIR /app
+
+ENV NODE_ENV=production
 
 # Güvenlik: root olmayan kullanıcı
 RUN addgroup -S pdks && adduser -S pdks -G pdks
 
-# Sadece gerekli dosyaları kopyala
-COPY --from=builder /app/dist ./dist
+# Builder aşamasından sadece gerekli dosyaları kopyala
+COPY --from=builder /app/dist       ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/start.mjs  ./start.mjs
 
-# Yükleme klasörü (avatar, ek dosyalar) — container yeniden başlayınca silinmemesi için volume bağlanmalı
-RUN mkdir -p uploads && chown pdks:pdks uploads && chown -R pdks:pdks dist
+# dist/public: frontend statik dosyalar (zaten dist içinde — build.ts kopyalıyor)
+# Yükleme klasörü — volume ile kalıcı hale getirilebilir
+RUN mkdir -p uploads && chown -R pdks:pdks uploads dist
 
 USER pdks
 
@@ -34,7 +40,5 @@ EXPOSE 3005
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
   CMD wget -qO- http://localhost:3005/api/v1/health || exit 1
 
-# start.mjs: önce migration çalıştır, sonra sunucuyu başlat
-COPY --from=builder /app/start.mjs ./start.mjs
-
+# start.mjs: önce migration çalıştırır, sonra sunucuyu başlatır
 CMD ["node", "start.mjs"]
